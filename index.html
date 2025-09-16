@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Общая надпись</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            position: relative;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            margin-bottom: 40px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        .text-display {
+            min-height: 120px;
+            border: 2px dashed #bdc3c7;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            font-size: 18px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            transition: all 0.3s ease;
+        }
+        .text-display:hover {
+            border-color: #3498db;
+            background-color: #edf2f7;
+        }
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            resize: vertical;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        button {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(to right, #2980b9, #3498db);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .info {
+            text-align: center;
+            color: #7f8c8d;
+            margin-top: 25px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .timestamp {
+            font-size: 13px;
+            color: #95a5a6;
+            text-align: right;
+            margin-top: 15px;
+            font-style: italic;
+        }
+        .signature {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            font-size: 13px;
+            color: #7f8c8d;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .signature:hover {
+            opacity: 1;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2ecc71;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .text-display, textarea {
+                min-height: 100px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✏️ Общая редактируемая надпись</h1>
+        
+        <div class="text-display" id="display">
+            Загрузка...
+        </div>
+        
+        <textarea id="textInput" placeholder="Введите ваш текст здесь..."></textarea>
+        
+        <div class="button-container">
+            <button onclick="saveText()">💾 Сохранить надпись</button>
+        </div>
+        
+        <div class="info">
+            📝 Каждый пользователь может изменить эту надпись. После сохранения все увидят изменения.
+        </div>
+        
+        <div class="timestamp" id="timestamp"></div>
+    </div>
+
+    <div class="signature">сделано Радмиром</div>
+    
+    <div class="notification" id="notification">Надпись сохранена!</div>
+
+    <script>
+        // Функция для загрузки текста из localStorage
+        function loadText() {
+            const savedData = localStorage.getItem('sharedText');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                document.getElementById('display').textContent = data.text;
+                
+                // Форматируем и отображаем время последнего изменения
+                const date = new Date(data.timestamp);
+                const formattedDate = date.toLocaleString('ru-RU');
+                document.getElementById('timestamp').textContent = 
+                    `Последнее изменение: ${formattedDate}`;
+            } else {
+                document.getElementById('display').textContent = 'Здесь пока пусто. Будьте первым, кто оставит надпись!';
+            }
+            
+            // Загружаем несохраненный текст из отдельного хранилища
+            const draftText = localStorage.getItem('draftText');
+            if (draftText) {
+                document.getElementById('textInput').value = draftText;
+            }
+        }
+        
+        // Функция для сохранения текста в localStorage
+        function saveText() {
+            const text = document.getElementById('textInput').value.trim();
+            
+            if (text === '') {
+                showNotification('Пожалуйста, введите текст', 'error');
+                return;
+            }
+            
+            const data = {
+                text: text,
+                timestamp: new Date().getTime()
+            };
+            
+            localStorage.setItem('sharedText', JSON.stringify(data));
+            
+            // Очищаем черновик после сохранения
+            localStorage.removeItem('draftText');
+            
+            // Обновляем отображение
+            loadText();
+            
+            // Показываем уведомление об успехе
+            showNotification('Надпись сохранена!');
+        }
+        
+        // Функция для сохранения черновика
+        function saveDraft() {
+            const text = document.getElementById('textInput').value;
+            localStorage.setItem('draftText', text);
+        }
+        
+        // Функция для показа уведомлений
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            
+            if (type === 'error') {
+                notification.style.backgroundColor = '#e74c3c';
+            } else {
+                notification.style.backgroundColor = '#2ecc71';
+            }
+            
+            notification.style.opacity = '1';
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+            }, 3000);
+        }
+        
+        // Сохраняем черновик при каждом изменении текста
+        document.getElementById('textInput').addEventListener('input', saveDraft);
+        
+        // Загружаем текст при загрузке страницы
+        window.onload = loadText;
+        
+        // Обновляем общую надпись каждые 2 секунды (но не затрагиваем поле ввода)
+        setInterval(loadText, 2000);
+    </script>
+</body>
+  </html>
